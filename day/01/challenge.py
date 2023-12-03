@@ -42,6 +42,8 @@ def find_first_digit(row: str, reverse: bool = False, detect_strings=False) -> i
             for word, digit in numbers:
                 if row.startswith(word, ind):
                     return digit
+    # fallback
+    return 0
 
 
 if __name__ == "__main__":
@@ -52,7 +54,7 @@ treb7uchet
 """
     expected = 142
     result = part1(fixture)
-    print(f"result {result}")
+    print(result)
     assert result == expected
     fixture2 = """two1nine
 eightwothree
