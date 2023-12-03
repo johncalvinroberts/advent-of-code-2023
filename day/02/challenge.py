@@ -51,7 +51,7 @@ def part2(input_str: str):
         if len(game) < 1:
             continue
         min_counts = {"red": 0, "green": 0, "blue": 0}
-        game_id, rounds = parse_game_info(game)
+        _, rounds = parse_game_info(game)
         for round in rounds:
             for color, count in round.items():
                 min_counts[color] = max(count, min_counts[color])
