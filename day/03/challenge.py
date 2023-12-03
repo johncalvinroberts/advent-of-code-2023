@@ -1,42 +1,43 @@
 import re
 
 
+def is_invalid_adjacent(row, prev_row, next_row, start, end):
+    # Check left and right adjacent in the same row
+    if (start > 0 and not (row[start - 1].isdigit() or row[start - 1] == ".")) or (
+        end < len(row) and not (row[end].isdigit() or row[end] == ".")
+    ):
+        return True
+
+    # Check adjacent characters in previous and next rows
+    for adj_row in [prev_row, next_row]:
+        if adj_row:
+            for i in range(max(start - 1, 0), min(end + 1, len(adj_row))):
+                if not (adj_row[i].isdigit() or adj_row[i] == "."):
+                    return True
+
+    return False
+
+
 # Find all the part numbers. Part numbers are NUMBERS that are surrounded by a symbol.
 # A char is a symbol if it's not a . or a number.
 # Sum all the part numbers
 def part1(input_str: str):
     schematic_rows = input_str.split("\n")
-    part_numbers: list[int] = []
+    part_numbers = []
+
     for index, row in enumerate(schematic_rows):
-        previous_row = schematic_rows[index - 1] if index > 0 else None
+        prev_row = schematic_rows[index - 1] if index > 0 else None
         next_row = (
             schematic_rows[index + 1] if index < len(schematic_rows) - 1 else None
         )
-        numbers_with_index = []
+
         for match in re.finditer(r"\d+", row):
             number = int(match.group())
-            start = match.start()
-            end = match.end()
-            numbers_with_index.append((start, end, number))
-        for start, end, n in numbers_with_index:
-            adjacents = []
-            if start > 0:
-                adjacents.append(row[start - 1])
-            if end + 1 < len(row):
-                adjacents.append(row[end])
-            if previous_row:
-                chunk_start = start - 1 if start > 0 else 0
-                chunk_end = end + 1 if end + 1 < len(row) else end
-                chunk = previous_row[chunk_start:chunk_end]
-                adjacents.extend(chunk)
-            if next_row:
-                chunk_start = start - 1 if start > 0 else 0
-                chunk_end = end + 1 if end + 1 < len(row) else end
-                chunk = next_row[chunk_start:chunk_end]
-                adjacents.extend(chunk)
-            no_symbols = all(item.isdigit() or item == "." for item in adjacents)
-            if not no_symbols:
-                part_numbers.append(n)
+            start, end = match.span()
+
+            if is_invalid_adjacent(row, prev_row, next_row, start, end):
+                part_numbers.append(number)
+
     return sum(part_numbers)
 
 
