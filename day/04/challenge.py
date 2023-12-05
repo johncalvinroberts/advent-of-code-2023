@@ -44,11 +44,14 @@ def part1(input_str: str):
 def part2(input_str: str):
     cards = input_str.strip().split("\n")
     card_count = 0
+    cache = {}
     stack = cards.copy()
     while len(stack) > 0:
         card = stack.pop(0)
         card_count += 1
-        identity, _, matches = process_card(card)
+        if card not in cache:
+            cache[card] = process_card(card)
+        identity, _, matches = cache[card]
         for i in range(matches):
             if cards[i + identity]:
                 stack.insert(0, cards[i + identity])
