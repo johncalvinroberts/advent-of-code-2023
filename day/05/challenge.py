@@ -14,6 +14,22 @@ def flatten_list(nested_list):
     return [item for sublist in nested_list for item in sublist]
 
 
+def parse_maps(chunks):
+    maps = []
+    curr_map: list[tuple[int, ...]] = []
+    for d in chunks:
+        if d == "":
+            continue
+        if ":" in d:
+            maps += [curr_map]
+            curr_map = []
+        else:
+            curr_map += [tuple(int(x) for x in d.split(" "))]
+
+    maps += [curr_map]
+    return maps
+
+
 def apply_maps(maps, seed):
     pre_map = seed
     for m in maps:
@@ -35,28 +51,40 @@ def part1(input_str: str):
     input_str = input_str.strip()
     chunks = input_str.split("\n")
     seeds = parse_numbers(chunks[0])
-    maps = []
-    curr_map: list[tuple[int, ...]] = []
-    for d in chunks[3:]:
-        if d == "":
-            continue
-        if ":" in d:
-            maps += [curr_map]
-            curr_map = []
+    maps = parse_maps(chunks[3:])
+    cache: dict[int, int] = {}
+    locs = {}
+    for s in seeds:
+        if s in cache:
+            result = cache[s]
+            locs[result] = s
         else:
-            curr_map += [tuple(int(x) for x in d.split(" "))]
-
-    maps += [curr_map]
-
-    locs = {apply_maps(maps, s): s for s in seeds}
+            result = apply_maps(maps, s)
+            cache[s] = result
+            locs[result] = s
     min_loc = min(locs.keys())
-    # locs = {apply_maps(transforms, s): s for s in seeds}
-    # min_loc = min(locs.keys())
     return min_loc
 
 
 def part2(input_str: str):
-    pass
+    input_str = input_str.strip()
+    chunks = input_str.split("\n")
+    raw_seeds = parse_numbers(chunks[0])
+    maps = parse_maps(chunks[3:])
+    cache = {}
+    locs = {}
+
+    # Optimize range creation
+    seeds: list[int] = []
+    seeds.extend([i for i in range(raw_seeds[0], raw_seeds[0] + raw_seeds[1])])
+    seeds.extend([i for i in range(raw_seeds[2], raw_seeds[2] + raw_seeds[3])])
+
+    for s in seeds:
+        if s not in cache:
+            cache[s] = apply_maps(maps, s)
+        locs[cache[s]] = s
+
+    return min(locs.keys())
 
 
 if __name__ == "__main__":
@@ -97,6 +125,6 @@ humidity-to-location map:
     result = part1(fixture)
     expected = 35
     assert result == expected
-    # fixture2, expected2 = ("", "")# Put simple fixture here
-    # result2 = part2(fixture2)
-    # assert result2 == expected2
+    result2 = part2(fixture)
+    expected2 = 46
+    assert result2 == expected2
