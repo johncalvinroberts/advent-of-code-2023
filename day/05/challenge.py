@@ -66,25 +66,94 @@ def part1(input_str: str):
     return min_loc
 
 
-def part2(input_str: str):
+def part2_og(input_str: str):
     input_str = input_str.strip()
     chunks = input_str.split("\n")
     raw_seeds = parse_numbers(chunks[0])
-    maps = parse_maps(chunks[3:])
-    cache = {}
-    locs = {}
+    raw_maps = parse_maps(chunks[3:])
 
-    # Optimize range creation
-    seeds: list[int] = []
-    seeds.extend([i for i in range(raw_seeds[0], raw_seeds[0] + raw_seeds[1])])
-    seeds.extend([i for i in range(raw_seeds[2], raw_seeds[2] + raw_seeds[3])])
+    for raw_map in raw_maps:
+        print(len(raw_map))
 
-    for s in seeds:
-        if s not in cache:
-            cache[s] = apply_maps(maps, s)
-        locs[cache[s]] = s
 
-    return min(locs.keys())
+# NOT MY SOLUTION
+# JFC THIS PROBLEM IS KINDA HARD
+def part2(text):
+    seeds = []
+    seed_maps = []
+
+    for line in text.split("\n"):
+        if len(line) != 0:
+            if re.match("^seeds:.+", line):
+                for seed_pair in re.findall(r"(\d+) (\d+)", line):
+                    seeds.append(
+                        {
+                            "start": int(seed_pair[0]),
+                            "end": int(seed_pair[0]) + int(seed_pair[1]) - 1,
+                        }
+                    )
+            elif re.match(".*map:", line):
+                seed_maps.append([])
+            else:
+                decoded_map = re.match(r"(\d+) (\d+) (\d+)", line)
+                if decoded_map:
+                    seed_maps[-1].append(
+                        {
+                            "difference": int(decoded_map.group(2))
+                            - int(decoded_map.group(1)),
+                            "source_start": int(decoded_map.group(2)),
+                            "source_end": int(decoded_map.group(2))
+                            + int(decoded_map.group(3))
+                            - 1,
+                        }
+                    )
+    print(seed_maps)
+
+    def sortBySource(map):
+        return map["source_start"]
+
+    for i, seed_map in enumerate(seed_maps):
+        seed_map.sort(key=sortBySource)
+
+    these_ranges = seeds
+
+    for seed_map in seed_maps:
+        next_ranges = []
+        for seed in these_ranges:
+            current_seed_start = seed["start"]
+            for single_seed_map in seed_map:
+                possible_start = max(
+                    single_seed_map["source_start"], current_seed_start
+                )
+
+                if possible_start > seed["end"]:
+                    break
+
+                possible_end = min(single_seed_map["source_end"], seed["end"])
+
+                if possible_end >= possible_start:
+                    if current_seed_start < possible_start:
+                        next_ranges.append(
+                            {"start": current_seed_start, "end": possible_start - 1}
+                        )
+                    next_ranges.append(
+                        {
+                            "start": possible_start - single_seed_map["difference"],
+                            "end": possible_end - single_seed_map["difference"],
+                        }
+                    )
+                    current_seed_start = possible_end + 1
+
+            if current_seed_start < seed["end"]:
+                next_ranges.append({"start": current_seed_start, "end": seed["end"]})
+
+        these_ranges = next_ranges.copy()
+
+    def sortByStart(seed):
+        return seed["start"]
+
+    next_ranges.sort(key=sortByStart)
+    return next_ranges[0]["start"]
 
 
 if __name__ == "__main__":
@@ -126,5 +195,7 @@ humidity-to-location map:
     expected = 35
     assert result == expected
     result2 = part2(fixture)
+    result22 = part2_og(fixture)
+    print(result2)
     expected2 = 46
     assert result2 == expected2
