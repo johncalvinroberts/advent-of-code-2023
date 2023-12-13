@@ -17,6 +17,7 @@ def get_hand_score(hand: str):
     triples = 0
     doubles = 0
     chars: dict[str, int] = {}
+
     for c in hand:
         if c in chars:
             chars[c] += 1
@@ -34,20 +35,19 @@ def get_hand_score(hand: str):
             triples = 1
         if count == 2:
             doubles += 1
-    score = 1
     if quints > 0:
-        score = 7
+        return 7
     if quads > 0:
-        score = 6
+        return 6
     if triples > 0 and doubles > 0:
-        score = 5
+        return 5
     if triples > 0 and doubles < 1:
-        score = 4
+        return 4
     if triples < 1 and doubles > 1:
-        score = 3
+        return 3
     if triples < 1 and doubles > 0:
-        score = 2
-    return score
+        return 2
+    return 1
 
 
 def compare_cards_recursively(hand1: str, hand2: str) -> int:
@@ -105,8 +105,17 @@ QQQJA 483
 """
     expected = 6440
     result = part1(fixture)
-    print(result)
     assert result == expected
+    fixture2 = """
+32T3K 100
+22334 100
+A23A4 100
+23332 100
+AA8AA 100
+AAAAA 100"""
+    result2 = part1(fixture2)
+    expected2 = 2100
+    assert result2 == expected2
     # fixture2, expected2 = ("", "")# Put simple fixture here
     # result2 = part2(fixture2)
     # assert result2 == expected2
