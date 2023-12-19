@@ -1,4 +1,5 @@
 import re
+import math
 
 
 # Goal: find how many steps are required to reach ZZZ
@@ -27,37 +28,27 @@ def part2(input_str: str) -> int:
     chunks = input_str.strip().split("\n\n")
     directives = list(chunks[0])
     rows = chunks[1].split("\n")
-    mappings: dict[str, tuple[str, str]] = {}
-    starting_keys: list[str] = []
-    for row in rows:
-        matches = re.findall(r"\b\w+\b", row)
-        key = matches[0]
-        mappings[key] = (matches[1], matches[2])
-        if key.endswith("A"):
-            starting_keys.append(key)
-    steps = 0
+    mappings = {
+        match[0]: {"L": match[1], "R": match[2]}
+        for match in (re.findall(r"\b\w+\b", row) for row in rows)
+    }
+    starting_keys = [key for key in mappings if key.endswith("A")]
 
-    condition = lambda x: x.endswith("Z")
+    def iterative_dfs(start_node):
+        steps = 0
+        node = start_node
+        direction_index = 0
 
-    def shall_we_continue():
-        # Some magical logic here
-        # Return True to continue, False to stop
-        if all(condition(item) for item in starting_keys):
-            return False
-        return True
-
-    while shall_we_continue():
-        for directive in directives:
-            for idx, key in enumerate(starting_keys):
-                left, right = mappings[key]
-                if directive == "L":
-                    key = left
-                if directive == "R":
-                    key = right
-                starting_keys[idx] = key
+        while not node.endswith("Z"):
+            # using modulo lets us cycle through directives infinitely
+            next_direction = directives[direction_index % len(directives)]
+            node = mappings[node][next_direction]
+            direction_index += 1
             steps += 1
 
-    return steps
+        return steps
+
+    return math.lcm(*(iterative_dfs(node) for node in starting_keys))
 
 
 if __name__ == "__main__":
