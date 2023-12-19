@@ -2,3 +2,4 @@ cookie
 __pycache__/
 *.pyc
 **/input.txt
+notes
