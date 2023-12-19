@@ -1,38 +1,6 @@
 from functools import cmp_to_key
 
 
-# 7 score types.
-# 5 duplicates -> 7
-# 4 duplicates -> 6
-# Full house: 3 duplicates + 2 duplicates (e.g., 23332) -> 5
-# 3 duplicates -> 4
-# 2 duplicates * 2 (e.g., 22334) -> 3
-# 1 duplicates -> 2
-# No duplicates -> 1
-def get_hand_score(hand: str, use_jokers: bool = False):
-    chars: dict[str, int] = {}
-    for c in hand:
-        chars[c] = chars.get(c, 0) + 1
-    if use_jokers and "J" in chars:
-        jokers = chars["J"]
-        del chars["J"]
-        if len(chars.keys()) > 0:
-            key_with_highest_value = max(chars, key=lambda key: chars[key])
-            chars[key_with_highest_value] += jokers
-    counts = chars.values()
-    if 5 in counts:
-        return 7
-    if 4 in counts:
-        return 6
-    if 3 in counts:
-        return 5 if 2 in counts else 4
-    if list(counts).count(2) == 2:
-        return 3
-    if 2 in counts:
-        return 2
-    return 1
-
-
 def compare_cards_recursively(hand1: str, hand2: str, cards_by_strength: str) -> int:
     h1 = cards_by_strength.index(hand1[0])
     h2 = cards_by_strength.index(hand2[0])
@@ -44,7 +12,9 @@ def compare_cards_recursively(hand1: str, hand2: str, cards_by_strength: str) ->
     return compare_cards_recursively(hand1[1:], hand2[1:], cards_by_strength)
 
 
-def compare_two_hands(hand1: list[str], hand2: list[str], use_jokers: bool):
+def compare_two_hands(
+    hand1: list[str], hand2: list[str], use_jokers: bool, get_hand_score
+):
     cards_by_strength = "AKQJT98765432"
     if use_jokers:
         cards_by_strength = "AKQT98765432J"
@@ -63,8 +33,27 @@ def compare_two_hands(hand1: list[str], hand2: list[str], use_jokers: bool):
 # sort the hands based on on rank
 # add up the winnings
 def part1(input_str: str):
+    def get_hand_score(hand: str, use_jokers: bool = False):
+        chars: dict[str, int] = {}
+        for c in hand:
+            chars[c] = chars.get(c, 0) + 1
+        counts = chars.values()
+        if 5 in counts:
+            return 7
+        if 4 in counts:
+            return 6
+        if 3 in counts:
+            return 5 if 2 in counts else 4
+        if list(counts).count(2) == 2:
+            return 3
+        if 2 in counts:
+            return 2
+        return 1
+
     def compare(hand1: list[str], hand2: list[str]):
-        return compare_two_hands(hand1, hand2, use_jokers=False)
+        return compare_two_hands(
+            hand1, hand2, use_jokers=False, get_hand_score=get_hand_score
+        )
 
     rows = input_str.strip().split("\n")
     hands = list(map(lambda x: x.split(" "), rows))
@@ -76,8 +65,33 @@ def part1(input_str: str):
 
 
 def part2(input_str: str):
+    def get_hand_score(hand: str, use_jokers: bool = False):
+        chars: dict[str, int] = {}
+        jokers = hand.count("J")
+        for c in hand:
+            if c != "J":
+                chars[c] = chars.get(c, 0) + 1
+        counts = sorted(chars.values(), reverse=True)
+        if not counts:
+            counts = [0]
+        if counts[0] + jokers == 5:
+            return 6
+        if counts[0] + jokers == 4:
+            return 5
+        if counts[0] + jokers == 3 and counts[1] == 2:
+            return 4
+        if counts[0] + jokers == 3:
+            return 3
+        if counts[0] == 2 and (jokers or counts[1] == 2):
+            return 2
+        if counts[0] == 2 or jokers:
+            return 1
+        return 0
+
     def compare(hand1: list[str], hand2: list[str]):
-        return compare_two_hands(hand1, hand2, use_jokers=True)
+        return compare_two_hands(
+            hand1, hand2, use_jokers=True, get_hand_score=get_hand_score
+        )
 
     rows = input_str.strip().split("\n")
     hands = list(map(lambda x: x.split(" "), rows))
